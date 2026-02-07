@@ -2,6 +2,12 @@
 Script to initialize default subscription plans
 Run this after setting up the database
 """
+import sys
+import os
+
+# Add project root to Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from database.base import get_session, init_db
 from database.models import Plan, PlanDuration
 
