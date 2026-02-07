@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة التحكم - المارد بوت{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-tachometer-alt"></i> لوحة التحكم</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-3"></i>
+                <h3>{{ total_users }}</h3>
+                <p class="mb-0">إجمالي المستخدمين</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-2x mb-3"></i>
+                <h3>{{ active_subscriptions }}</h3>
+                <p class="mb-0">اشتراكات نشطة</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x mb-3"></i>
+                <h3>{{ pending_payments }}</h3>
+                <p class="mb-0">مدفوعات معلقة</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="fas fa-dollar-sign fa-2x mb-3"></i>
+                <h3>{{ "%.2f"|format(total_revenue) }}</h3>
+                <p class="mb-0">إجمالي الإيرادات (USDT)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> معلومات سريعة</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>روابط سريعة:</h6>
+                        <ul>
+                            <li><a href="/plans">إدارة الخطط</a></li>
+                            <li><a href="/subscriptions">عرض الاشتراكات</a></li>
+                            <li><a href="/users">عرض المستخدمين</a></li>
+                            <li><a href="/settings">الإعدادات</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>إحصائيات:</h6>
+                        <ul>
+                            <li>المستخدمين: {{ total_users }}</li>
+                            <li>الاشتراكات النشطة: {{ active_subscriptions }}</li>
+                            <li>المدفوعات المعلقة: {{ pending_payments }}</li>
+                            <li>إجمالي الإيرادات: {{ "%.2f"|format(total_revenue) }} USDT</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

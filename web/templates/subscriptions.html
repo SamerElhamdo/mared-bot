@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}الاشتراكات - المارد بوت{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-users"></i> إدارة الاشتراكات</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>المستخدم</th>
+                    <th>الخطة</th>
+                    <th>الحالة</th>
+                    <th>تاريخ البداية</th>
+                    <th>تاريخ الانتهاء</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in subscriptions %}
+                <tr>
+                    <td>{{ sub.id }}</td>
+                    <td>
+                        @{{ sub.user.username or sub.user.telegram_id }}
+                        ({{ sub.user.first_name or '' }})
+                    </td>
+                    <td>{{ sub.plan.name_ar or sub.plan.name }}</td>
+                    <td>
+                        {% if sub.status.value == 'active' %}
+                        <span class="badge bg-success">نشط</span>
+                        {% elif sub.status.value == 'trial' %}
+                        <span class="badge bg-info">تجربة</span>
+                        {% elif sub.status.value == 'expired' %}
+                        <span class="badge bg-danger">منتهي</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ sub.status.value }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ sub.start_date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ sub.end_date.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        {% if sub.status.value != 'active' %}
+                        <button class="btn btn-sm btn-success" onclick="activateSubscription({{ sub.id }})">
+                            <i class="fas fa-check"></i> تفعيل
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function activateSubscription(subId) {
+    if (confirm('هل تريد تفعيل هذا الاشتراك؟')) {
+        fetch(`/api/subscriptions/${subId}/activate`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('خطأ: ' + data.error);
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
+

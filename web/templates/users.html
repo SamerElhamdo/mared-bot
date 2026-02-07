@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}المستخدمين - المارد بوت{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-user-friends"></i> إدارة المستخدمين</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Telegram ID</th>
+                    <th>الاسم</th>
+                    <th>Username</th>
+                    <th>كود الإحالة</th>
+                    <th>التجربة المجانية</th>
+                    <th>تاريخ التسجيل</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.telegram_id }}</td>
+                    <td>{{ user.first_name or '' }} {{ user.last_name or '' }}</td>
+                    <td>@{{ user.username or '-' }}</td>
+                    <td><code>{{ user.referral_code }}</code></td>
+                    <td>
+                        {% if user.free_trial_used %}
+                        <span class="badge bg-secondary">مستخدم</span>
+                        {% else %}
+                        <span class="badge bg-success">متاح</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

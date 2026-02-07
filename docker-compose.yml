@@ -33,6 +33,25 @@ services:
     restart: unless-stopped
     command: sh -c "python -m alembic upgrade head && python -m bot.main"
 
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: mared_bot_web
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/mared_bot
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./web:/app
+    restart: unless-stopped
+
 volumes:
   postgres_data:
 
