@@ -83,9 +83,6 @@ async def main():
     # Initialize channel manager
     channel_manager = ChannelManager(bot)
     
-    # Store channel_manager in bot for access in handlers
-    bot["channel_manager"] = channel_manager
-    
     # Start background task for checking expired subscriptions
     asyncio.create_task(check_expired_subscriptions(bot, channel_manager))
     
