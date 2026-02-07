@@ -77,8 +77,10 @@ async def main():
     )
     
     dp = Dispatcher()
-    dp.include_router(router)
+    # Include admin router first (more specific handlers)
     dp.include_router(admin_router)
+    # Include main router (general handlers)
+    dp.include_router(router)
     
     # Initialize channel manager
     channel_manager = ChannelManager(bot)

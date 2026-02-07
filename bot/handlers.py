@@ -28,6 +28,9 @@ logger = logging.getLogger(__name__)
 
 router = Router()
 
+# Register pay_network handler BEFORE pay handler to ensure correct matching
+# More specific patterns should be registered first
+
 
 @router.message(CommandStart())
 async def cmd_start(message: Message):
@@ -194,48 +197,12 @@ async def callback_trial(callback: CallbackQuery):
         await callback.answer(Texts.ERROR_OCCURRED, show_alert=True)
 
 
-@router.callback_query(F.data.startswith("pay_"))
-async def callback_pay(callback: CallbackQuery):
-    """Handle payment callback - show network selection"""
-    try:
-        # Skip if this is pay_network_ callback
-        if callback.data.startswith("pay_network_"):
-            return
-        
-        plan_id = int(callback.data.split("_")[1])
-        
-        with get_session() as session:
-            plan = session.query(Plan).filter(Plan.id == plan_id).first()
-        
-        if not plan:
-            await callback.answer("الخطة غير موجودة", show_alert=True)
-            return
-        
-        # Check if user already has active subscription
-        if SubscriptionService.has_active_subscription(callback.from_user.id):
-            await callback.answer("لديك اشتراك نشط بالفعل", show_alert=True)
-            return
-        
-        # Show network selection
-        await callback.message.edit_text(
-            Texts.PAYMENT_NETWORK_SELECTION.format(
-                plan_name=plan.name_ar or plan.name,
-                amount=plan.price,
-                currency=plan.currency
-            ),
-            reply_markup=get_payment_network_keyboard(plan_id)
-        )
-        await callback.answer()
-    except TelegramBadRequest:
-        await callback.answer()
-    except Exception as e:
-        logger.error(f"Error in callback_pay: {e}", exc_info=True)
-        await callback.answer(Texts.ERROR_OCCURRED, show_alert=True)
-
-
+# IMPORTANT: Register pay_network BEFORE pay_ because it's more specific
+# aiogram matches handlers in order, so more specific patterns should come first
 @router.callback_query(F.data.startswith("pay_network_"))
 async def callback_pay_network(callback: CallbackQuery):
     """Handle payment network selection callback"""
+    logger.info(f"callback_pay_network called with data: {callback.data}")
     try:
         # Parse: pay_network_{plan_id}_{network}
         parts = callback.data.split("_")
