@@ -284,10 +284,14 @@ async def delete_plan_api(plan_id: int, _: bool = Depends(require_admin)):
 @app.get("/subscriptions", response_class=HTMLResponse)
 async def subscriptions_page(request: Request, _: bool = Depends(require_admin)):
     """Subscriptions management page"""
-    with get_session() as session:
-        subscriptions = session.query(Subscription).join(User).join(Plan).order_by(
-            Subscription.created_at.desc()
-        ).limit(100).all()
+    try:
+        with get_session() as session:
+            subscriptions = session.query(Subscription).join(User).join(Plan).order_by(
+                Subscription.created_at.desc()
+            ).limit(100).all()
+    except Exception as e:
+        logger.error(f"Database error in subscriptions_page: {e}", exc_info=True)
+        subscriptions = []
     
     return templates.TemplateResponse("subscriptions.html", {
         "request": request,
@@ -298,8 +302,12 @@ async def subscriptions_page(request: Request, _: bool = Depends(require_admin))
 @app.get("/users", response_class=HTMLResponse)
 async def users_page(request: Request, _: bool = Depends(require_admin)):
     """Users management page"""
-    with get_session() as session:
-        users = session.query(User).order_by(User.created_at.desc()).limit(100).all()
+    try:
+        with get_session() as session:
+            users = session.query(User).order_by(User.created_at.desc()).limit(100).all()
+    except Exception as e:
+        logger.error(f"Database error in users_page: {e}", exc_info=True)
+        users = []
     
     return templates.TemplateResponse("users.html", {
         "request": request,

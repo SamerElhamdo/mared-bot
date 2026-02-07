@@ -42,6 +42,7 @@ services:
       db:
         condition: service_healthy
     environment:
+      # Override DATABASE_URL to use Docker service name
       DATABASE_URL: postgresql://postgres:postgres@db:5432/mared_bot
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
       PYTHONPATH: /app

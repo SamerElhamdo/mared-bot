@@ -22,6 +22,6 @@ COPY web /app/web
 # Expose port
 EXPOSE 8000
 
-# Run web server
-CMD ["uvicorn", "web.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run startup check and then web server
+CMD ["sh", "-c", "python web/startup_check.py && uvicorn web.main:app --host 0.0.0.0 --port 8000"]
 
