@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from typing import List
 
 
@@ -31,9 +32,11 @@ class Settings(BaseSettings):
             return []
         return [int(uid.strip()) for uid in self.ADMIN_USER_IDS.split(",") if uid.strip()]
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore"  # Ignore extra environment variables (e.g., from Dokploy)
+    )
 
 
 settings = Settings()
