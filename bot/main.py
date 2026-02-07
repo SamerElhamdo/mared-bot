@@ -5,6 +5,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from config.settings import settings
 from bot.handlers import router
+from bot.admin_handlers import admin_router
 from bot.channel_manager import ChannelManager
 from utils.logging import setup_logging
 from database.base import init_db, get_session
