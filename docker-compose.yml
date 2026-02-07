@@ -1,5 +1,10 @@
 version: '3.8'
 
+networks:
+  default:
+    name: mared_bot_network
+    driver: bridge
+
 services:
   db:
     image: postgres:16-alpine
@@ -15,6 +20,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - default
     # No ports exposed - containers communicate via internal Docker network
     # This prevents port conflicts on the host
 
@@ -46,14 +53,17 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/mared_bot
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
       PYTHONPATH: /app
-    env_file:
-      - .env
+    # Don't load .env file to avoid DATABASE_URL override
+    # env_file will load DATABASE_URL from .env which might use localhost
+    # Instead, we use environment variable directly
     ports:
       - "${WEB_PORT:-8080}:8000"
     volumes:
       - .:/app
       - ./web:/app/web
     restart: unless-stopped
+    networks:
+      - default
 
 volumes:
   postgres_data:
