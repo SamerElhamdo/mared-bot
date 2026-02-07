@@ -62,6 +62,26 @@ def get_plan_details_keyboard(plan_id: int, can_use_trial: bool = False) -> Inli
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
+def get_payment_network_keyboard(plan_id: int) -> InlineKeyboardMarkup:
+    """Payment network selection keyboard"""
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text="💎 USDT (TRC20)",
+                callback_data=f"pay_network_{plan_id}_TRC20"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="💎 USDT (BSC)",
+                callback_data=f"pay_network_{plan_id}_BSC"
+            )
+        ],
+        [get_back_button(f"plan_{plan_id}")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
 def get_payment_keyboard(payment_id: int, wallet_address: str) -> InlineKeyboardMarkup:
     """Payment instructions keyboard"""
     keyboard = [
@@ -116,4 +136,3 @@ def get_info_keyboard() -> InlineKeyboardMarkup:
         [get_back_button("menu")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
-

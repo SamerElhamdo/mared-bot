@@ -93,6 +93,7 @@ class Payment(Base):
     plan_id = Column(Integer, ForeignKey("plans.id"), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
     currency = Column(String(10), nullable=False)
+    network = Column(String(20), nullable=True)  # TRC20, BSC, etc.
     status = Column(Enum(PaymentStatus), default=PaymentStatus.PENDING)
     provider = Column(String(50), default="manual")
     transaction_id = Column(String(255), nullable=True, unique=True, index=True)

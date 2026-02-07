@@ -77,6 +77,7 @@ async def main():
     
     dp = Dispatcher()
     dp.include_router(router)
+    dp.include_router(admin_router)
     
     # Initialize channel manager
     channel_manager = ChannelManager(bot)

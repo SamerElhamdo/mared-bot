@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class PaymentService:
     @staticmethod
     def create_payment(user_id: int, plan_id: int, amount: float, currency: str = "USDT",
-                      provider: str = "manual", wallet_address: str = None) -> Payment:
+                      provider: str = "manual", wallet_address: str = None, network: str = None) -> Payment:
         """Create a new payment record"""
         with get_session() as session:
             plan = session.query(Plan).filter(Plan.id == plan_id).first()
@@ -23,6 +23,7 @@ class PaymentService:
                 plan_id=plan_id,
                 amount=amount,
                 currency=currency,
+                network=network,
                 status=PaymentStatus.PENDING,
                 provider=provider,
                 wallet_address=wallet_address,
@@ -31,7 +32,8 @@ class PaymentService:
             session.commit()
             session.refresh(payment)
             
-            logger.info(f"Created payment {payment.id} for user {user_id}, amount: {amount} {currency}")
+            network_info = f" on {network}" if network else ""
+            logger.info(f"Created payment {payment.id} for user {user_id}, amount: {amount} {currency}{network_info}")
             return payment
     
     @staticmethod

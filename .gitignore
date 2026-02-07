@@ -29,3 +29,7 @@ wheels/
 .vscode/
 .idea/
 
+# Stickers (keep directory but ignore files)
+stickers/*.tgs
+!stickers/README.md
+

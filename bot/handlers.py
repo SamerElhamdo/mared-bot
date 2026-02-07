@@ -13,12 +13,14 @@ from bot.keyboards import (
     get_plans_keyboard,
     get_plan_details_keyboard,
     get_payment_keyboard,
+    get_payment_network_keyboard,
     get_referral_keyboard,
     get_subscriptions_keyboard,
     get_info_keyboard,
 )
 from bot.texts import Texts
 from bot.channel_manager import ChannelManager
+from bot.sticker_helpers import send_sticker_if_available
 from config.settings import settings
 import logging
 
@@ -49,6 +51,9 @@ async def cmd_start(message: Message):
                 logger.info(f"Processed referral: {referrer.id} -> {user.id}")
         
         # Send welcome message (only new message for welcome)
+        # Try to send welcome sticker first
+        await send_sticker_if_available(message.bot, message.chat.id, "success")
+        
         await message.answer(
             Texts.WELCOME,
             reply_markup=get_main_menu_keyboard()
@@ -173,6 +178,9 @@ async def callback_trial(callback: CallbackQuery):
         await channel_manager.add_user(callback.from_user.id)
         
         # Send success message (new message for trial activation)
+        # Send trial success sticker
+        await send_sticker_if_available(callback.bot, callback.from_user.id, "trial")
+        
         await callback.message.answer(
             Texts.TRIAL_ACTIVATED.format(
                 days=settings.FREE_TRIAL_DAYS,
@@ -188,7 +196,7 @@ async def callback_trial(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("pay_"))
 async def callback_pay(callback: CallbackQuery):
-    """Handle payment callback"""
+    """Handle payment callback - show network selection"""
     try:
         plan_id = int(callback.data.split("_")[1])
         
@@ -204,7 +212,60 @@ async def callback_pay(callback: CallbackQuery):
             await callback.answer("لديك اشتراك نشط بالفعل", show_alert=True)
             return
         
-        # Create payment
+        # Show network selection
+        await callback.message.edit_text(
+            Texts.PAYMENT_NETWORK_SELECTION.format(
+                plan_name=plan.name_ar or plan.name,
+                amount=plan.price,
+                currency=plan.currency
+            ),
+            reply_markup=get_payment_network_keyboard(plan_id)
+        )
+        await callback.answer()
+    except TelegramBadRequest:
+        await callback.answer()
+    except Exception as e:
+        logger.error(f"Error in callback_pay: {e}", exc_info=True)
+        await callback.answer(Texts.ERROR_OCCURRED, show_alert=True)
+
+
+@router.callback_query(F.data.startswith("pay_network_"))
+async def callback_pay_network(callback: CallbackQuery):
+    """Handle payment network selection callback"""
+    try:
+        # Parse: pay_network_{plan_id}_{network}
+        parts = callback.data.split("_")
+        plan_id = int(parts[2])
+        network = parts[3]  # TRC20 or BSC
+        
+        with get_session() as session:
+            plan = session.query(Plan).filter(Plan.id == plan_id).first()
+        
+        if not plan:
+            await callback.answer("الخطة غير موجودة", show_alert=True)
+            return
+        
+        # Get wallet address based on network
+        if network == "TRC20":
+            wallet_address = settings.USDT_TRC20_ADDRESS
+            network_name = "USDT (TRC20)"
+        elif network == "BSC":
+            wallet_address = settings.USDT_BSC_ADDRESS
+            network_name = "USDT (BSC)"
+        else:
+            await callback.answer("شبكة غير صحيحة", show_alert=True)
+            return
+        
+        if not wallet_address:
+            await callback.answer("عنوان المحفظة غير متوفر لهذه الشبكة", show_alert=True)
+            return
+        
+        # Check if user already has active subscription
+        if SubscriptionService.has_active_subscription(callback.from_user.id):
+            await callback.answer("لديك اشتراك نشط بالفعل", show_alert=True)
+            return
+        
+        # Create payment with network
         user = UserService.get_user_by_telegram_id(callback.from_user.id)
         payment = PaymentService.create_payment(
             user.id,
@@ -212,7 +273,8 @@ async def callback_pay(callback: CallbackQuery):
             float(plan.price),
             plan.currency,
             provider=settings.CRYPTO_PROVIDER,
-            wallet_address=settings.CRYPTO_WALLET_ADDRESS
+            wallet_address=wallet_address,
+            network=network
         )
         
         await callback.message.edit_text(
@@ -220,16 +282,17 @@ async def callback_pay(callback: CallbackQuery):
                 plan_name=plan.name_ar or plan.name,
                 amount=plan.price,
                 currency=plan.currency,
-                wallet_address=settings.CRYPTO_WALLET_ADDRESS
+                network=network_name,
+                wallet_address=wallet_address
             ),
-            reply_markup=get_payment_keyboard(payment.id, settings.CRYPTO_WALLET_ADDRESS),
+            reply_markup=get_payment_keyboard(payment.id, wallet_address),
             parse_mode="Markdown"
         )
         await callback.answer()
     except TelegramBadRequest:
         await callback.answer()
     except Exception as e:
-        logger.error(f"Error in callback_pay: {e}", exc_info=True)
+        logger.error(f"Error in callback_pay_network: {e}", exc_info=True)
         await callback.answer(Texts.ERROR_OCCURRED, show_alert=True)
 
 
@@ -262,6 +325,9 @@ async def callback_confirm_payment(callback: CallbackQuery):
             await channel_manager.add_user(callback.from_user.id)
             
             # Send success message (new message for payment confirmation)
+            # Send payment success sticker
+            await send_sticker_if_available(callback.bot, callback.from_user.id, "payment")
+            
             await callback.message.answer(
                 Texts.PAYMENT_CONFIRMED,
                 reply_markup=get_main_menu_keyboard()

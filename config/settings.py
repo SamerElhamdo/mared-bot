@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     # Crypto Payment Configuration
     CRYPTO_PROVIDER: str = "manual"
     CRYPTO_WALLET_ADDRESS: str = ""
+    # USDT Wallet Addresses for different networks
+    USDT_TRC20_ADDRESS: str = ""
+    USDT_BSC_ADDRESS: str = ""
     
     # Bot Configuration
     ADMIN_USER_IDS: str = ""
