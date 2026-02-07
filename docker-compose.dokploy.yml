@@ -15,8 +15,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # No ports exposed - containers communicate via internal Docker network
-    # This prevents port conflicts on the host
+    # No ports exposed - internal network only
+    # This prevents port conflicts on Dokploy
+    # Containers communicate via Docker's internal network
     networks:
       - default
 
@@ -34,6 +35,8 @@ services:
       - .:/app
     restart: unless-stopped
     command: sh -c "python -m alembic upgrade head && python -m bot.main"
+    networks:
+      - default
 
 volumes:
   postgres_data:
