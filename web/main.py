@@ -34,6 +34,9 @@ from services.subscription_service import SubscriptionService
 from services.user_service import UserService
 from services.payment_service import PaymentService
 from config.settings import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Mared Bot Admin Panel")
 
@@ -119,19 +122,27 @@ async def logout(request: Request):
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request, _: bool = Depends(require_admin)):
     """Admin dashboard"""
-    with get_session() as session:
-        total_users = session.query(User).count()
-        active_subscriptions = session.query(Subscription).filter(
-            Subscription.status == SubscriptionStatus.ACTIVE
-        ).count()
-        pending_payments = session.query(Payment).filter(
-            Payment.status == PaymentStatus.PENDING
-        ).count()
-        total_revenue = session.query(
-            func.sum(Payment.amount)
-        ).filter(
-            Payment.status == PaymentStatus.COMPLETED
-        ).scalar() or 0
+    try:
+        with get_session() as session:
+            total_users = session.query(User).count()
+            active_subscriptions = session.query(Subscription).filter(
+                Subscription.status == SubscriptionStatus.ACTIVE
+            ).count()
+            pending_payments = session.query(Payment).filter(
+                Payment.status == PaymentStatus.PENDING
+            ).count()
+            total_revenue = session.query(
+                func.sum(Payment.amount)
+            ).filter(
+                Payment.status == PaymentStatus.COMPLETED
+            ).scalar() or 0
+    except Exception as e:
+        logger.error(f"Database error in dashboard: {e}", exc_info=True)
+        # Return default values if database connection fails
+        total_users = 0
+        active_subscriptions = 0
+        pending_payments = 0
+        total_revenue = 0
     
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
