@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional
 from database.models import Payment, PaymentStatus, Plan
 from database.base import get_session
@@ -74,9 +74,11 @@ class PaymentService:
     
     @staticmethod
     def get_payment(payment_id: int) -> Optional[Payment]:
-        """Get payment by ID"""
+        """Get payment by ID with user loaded eagerly"""
         with get_session() as session:
-            return session.query(Payment).filter(Payment.id == payment_id).first()
+            return session.query(Payment).options(
+                joinedload(Payment.user)
+            ).filter(Payment.id == payment_id).first()
     
     @staticmethod
     def get_user_payments(user_id: int) -> list:
