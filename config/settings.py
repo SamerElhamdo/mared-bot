@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
     
+    # Channel Configuration
+    USE_INVITE_LINKS: bool = True  # Use invite links instead of unban (better for private channels)
+    
     @property
     def admin_ids_list(self) -> List[int]:
         """Parse admin user IDs from comma-separated string"""
