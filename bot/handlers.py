@@ -349,7 +349,9 @@ async def callback_my_subscriptions(callback: CallbackQuery):
             await callback.answer("المستخدم غير موجود", show_alert=True)
             return
         
-        subscriptions = SubscriptionService.get_user_subscriptions(user.id)
+        # Get user_id before session closes
+        user_id = user.id
+        subscriptions = SubscriptionService.get_user_subscriptions(user_id)
         
         if not subscriptions:
             text = Texts.NO_SUBSCRIPTION
@@ -379,9 +381,12 @@ async def callback_referral(callback: CallbackQuery):
             await callback.answer("المستخدم غير موجود", show_alert=True)
             return
         
+        # Get referral_code before session closes
+        referral_code = user.referral_code
+        
         await callback.message.edit_text(
-            Texts.REFERRAL_CODE.format(referral_code=user.referral_code),
-            reply_markup=get_referral_keyboard(user.referral_code),
+            Texts.REFERRAL_CODE.format(referral_code=referral_code),
+            reply_markup=get_referral_keyboard(referral_code),
             parse_mode="Markdown"
         )
         await callback.answer()
@@ -413,7 +418,11 @@ async def callback_referral_stats(callback: CallbackQuery):
             await callback.answer("المستخدم غير موجود", show_alert=True)
             return
         
-        stats = ReferralService.get_referral_stats(user.id)
+        # Get values before session closes
+        user_id = user.id
+        referral_code = user.referral_code
+        
+        stats = ReferralService.get_referral_stats(user_id)
         
         from services.referral_service import REFERRAL_POINTS
         
@@ -423,7 +432,7 @@ async def callback_referral_stats(callback: CallbackQuery):
                 total_points=stats["total_points"],
                 points_per_referral=REFERRAL_POINTS
             ),
-            reply_markup=get_referral_keyboard(user.referral_code)
+            reply_markup=get_referral_keyboard(referral_code)
         )
         await callback.answer()
     except TelegramBadRequest:
@@ -442,7 +451,11 @@ async def callback_redeem_points(callback: CallbackQuery):
             await callback.answer("المستخدم غير موجود", show_alert=True)
             return
         
-        total_points = ReferralService.get_user_total_points(user.id)
+        # Get values before session closes
+        user_id = user.id
+        referral_code = user.referral_code
+        
+        total_points = ReferralService.get_user_total_points(user_id)
         
         if total_points == 0:
             await callback.answer(Texts.NO_POINTS, show_alert=True)
@@ -452,7 +465,7 @@ async def callback_redeem_points(callback: CallbackQuery):
         await callback.message.edit_text(
             f"🎁 نقاطك الحالية: {total_points}\n\n"
             "سيتم إضافة خيارات الاستبدال قريباً.",
-            reply_markup=get_referral_keyboard(user.referral_code)
+            reply_markup=get_referral_keyboard(referral_code)
         )
         await callback.answer()
     except TelegramBadRequest:
