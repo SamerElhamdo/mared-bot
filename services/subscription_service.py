@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from datetime import datetime, timedelta
 from typing import Optional, List
 from database.models import Subscription, SubscriptionStatus, Plan, User
@@ -90,7 +90,9 @@ class SubscriptionService:
     def get_user_subscriptions(user_id: int) -> List[Subscription]:
         """Get all subscriptions for a user"""
         with get_session() as session:
-            return session.query(Subscription).filter(
+            return session.query(Subscription).options(
+                joinedload(Subscription.plan)
+            ).filter(
                 Subscription.user_id == user_id
             ).order_by(Subscription.created_at.desc()).all()
     

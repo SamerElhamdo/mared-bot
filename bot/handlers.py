@@ -198,6 +198,10 @@ async def callback_trial(callback: CallbackQuery):
 async def callback_pay(callback: CallbackQuery):
     """Handle payment callback - show network selection"""
     try:
+        # Skip if this is pay_network_ callback
+        if callback.data.startswith("pay_network_"):
+            return
+        
         plan_id = int(callback.data.split("_")[1])
         
         with get_session() as session:

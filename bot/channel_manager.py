@@ -16,10 +16,23 @@ class ChannelManager:
     async def add_user(self, user_id: int) -> bool:
         """Add user to channel"""
         try:
-            await self.bot.promote_chat_member(
+            # First, unban if banned
+            try:
+                await self.bot.unban_chat_member(
+                    chat_id=self.channel_id,
+                    user_id=user_id,
+                    only_if_banned=True
+                )
+            except:
+                pass  # User might not be banned
+            
+            # Then, invite user (for private channels) or unban (for public channels)
+            # For public channels, unban is enough
+            # For private channels, we need to use invite link or unban
+            await self.bot.unban_chat_member(
                 chat_id=self.channel_id,
                 user_id=user_id,
-                can_read_messages=True
+                only_if_banned=False
             )
             logger.info(f"Added user {user_id} to channel {self.channel_id}")
             return True
