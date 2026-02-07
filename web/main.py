@@ -6,7 +6,15 @@ import os
 from pathlib import Path
 
 # Add project root to Python path
-project_root = Path(__file__).parent.parent
+# In Docker: /app is project root, /app/web is web directory
+# In local: parent of web/ is project root
+if Path("/app").exists() and Path("/app/database").exists():
+    # Running in Docker - /app is project root
+    project_root = Path("/app")
+else:
+    # Running locally - parent of web/ is project root
+    project_root = Path(__file__).parent.parent
+
 sys.path.insert(0, str(project_root))
 
 from fastapi import FastAPI, Request, Depends, HTTPException, Form
@@ -30,7 +38,15 @@ from config.settings import settings
 app = FastAPI(title="Mared Bot Admin Panel")
 
 # Templates
-templates_dir = Path(__file__).parent / "templates"
+# In Docker: /app/web/templates
+# Locally: web/templates relative to project root
+if Path("/app/web/templates").exists():
+    templates_dir = Path("/app/web/templates")
+elif (Path(__file__).parent / "templates").exists():
+    templates_dir = Path(__file__).parent / "templates"
+else:
+    templates_dir = project_root / "web" / "templates"
+
 templates = Jinja2Templates(directory=str(templates_dir))
 
 # Simple session storage (in production, use proper session management)

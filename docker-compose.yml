@@ -35,8 +35,8 @@ services:
 
   web:
     build:
-      context: ./web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./web/Dockerfile
     container_name: mared_bot_web
     depends_on:
       db:
@@ -49,7 +49,8 @@ services:
     ports:
       - "${WEB_PORT:-8080}:8000"
     volumes:
-      - ./web:/app
+      - .:/app
+      - ./web:/app/web
     restart: unless-stopped
 
 volumes:
