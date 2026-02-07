@@ -21,7 +21,7 @@ from fastapi import FastAPI, Request, Depends, HTTPException, Form
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional
 import hashlib
 import secrets
@@ -286,7 +286,10 @@ async def subscriptions_page(request: Request, _: bool = Depends(require_admin))
     """Subscriptions management page"""
     try:
         with get_session() as session:
-            subscriptions = session.query(Subscription).join(User).join(Plan).order_by(
+            subscriptions = session.query(Subscription).options(
+                joinedload(Subscription.user),
+                joinedload(Subscription.plan)
+            ).order_by(
                 Subscription.created_at.desc()
             ).limit(100).all()
     except Exception as e:
