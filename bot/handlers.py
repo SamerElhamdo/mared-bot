@@ -304,6 +304,60 @@ async def callback_pay_network(callback: CallbackQuery):
         await callback.answer(Texts.ERROR_OCCURRED, show_alert=True)
 
 
+@router.callback_query(F.data.startswith("pay_") & ~F.data.startswith("pay_network_"))
+async def callback_pay(callback: CallbackQuery):
+    """Handle payment callback - show network selection"""
+    logger.info(f"callback_pay called with data: {callback.data}")
+    try:
+        # Parse plan_id from callback data (format: pay_{plan_id})
+        parts = callback.data.split("_")
+        if len(parts) < 2:
+            logger.error(f"Invalid callback data format: {callback.data}")
+            await callback.answer("خطأ في بيانات الدفع", show_alert=True)
+            return
+        
+        plan_id = int(parts[1])
+        logger.info(f"Processing payment for plan_id={plan_id}, user={callback.from_user.id}")
+        
+        with get_session() as session:
+            plan = session.query(Plan).filter(Plan.id == plan_id).first()
+        
+        if not plan:
+            logger.error(f"Plan {plan_id} not found")
+            await callback.answer("الخطة غير موجودة", show_alert=True)
+            return
+        
+        # Check if user already has active subscription
+        if SubscriptionService.has_active_subscription(callback.from_user.id):
+            await callback.answer("لديك اشتراك نشط بالفعل", show_alert=True)
+            return
+        
+        # Show network selection
+        logger.info(f"Showing network selection for plan {plan_id}")
+        network_text = Texts.PAYMENT_NETWORK_SELECTION.format(
+            plan_name=plan.name_ar or plan.name,
+            amount=plan.price,
+            currency=plan.currency
+        )
+        network_keyboard = get_payment_network_keyboard(plan_id)
+        
+        await callback.message.edit_text(
+            network_text,
+            reply_markup=network_keyboard
+        )
+        await callback.answer()
+        logger.info(f"Successfully displayed network selection for plan {plan_id}")
+    except ValueError as e:
+        logger.error(f"Value error in callback_pay: {e}, data: {callback.data}", exc_info=True)
+        await callback.answer("خطأ في معالجة البيانات", show_alert=True)
+    except TelegramBadRequest as e:
+        logger.error(f"TelegramBadRequest in callback_pay: {e}")
+        await callback.answer()
+    except Exception as e:
+        logger.error(f"Error in callback_pay: {e}", exc_info=True)
+        await callback.answer(Texts.ERROR_OCCURRED, show_alert=True)
+
+
 @router.callback_query(F.data.startswith("confirm_payment_"))
 async def callback_confirm_payment(callback: CallbackQuery):
     """Handle payment confirmation callback"""
