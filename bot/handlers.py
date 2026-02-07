@@ -281,17 +281,27 @@ async def callback_pay_network(callback: CallbackQuery):
             network=network
         )
         
-        await callback.message.edit_text(
-            Texts.PAYMENT_INSTRUCTIONS.format(
-                plan_name=plan.name_ar or plan.name,
-                amount=plan.price,
-                currency=plan.currency,
-                network=network_name,
-                wallet_address=wallet_address
-            ),
-            reply_markup=get_payment_keyboard(payment.id, wallet_address),
-            parse_mode="Markdown"
+        payment_text = Texts.PAYMENT_INSTRUCTIONS.format(
+            plan_name=plan.name_ar or plan.name,
+            amount=plan.price,
+            currency=plan.currency,
+            network=network_name,
+            wallet_address=wallet_address
         )
+        
+        try:
+            await callback.message.edit_text(
+                payment_text,
+                reply_markup=get_payment_keyboard(payment.id, wallet_address),
+                parse_mode="Markdown"
+            )
+        except TelegramBadRequest as e:
+            # If Markdown fails, try without parse_mode
+            logger.warning(f"Markdown parse failed, trying without: {e}")
+            await callback.message.edit_text(
+                payment_text.replace("`", ""),  # Remove markdown backticks
+                reply_markup=get_payment_keyboard(payment.id, wallet_address)
+            )
         await callback.answer()
     except TelegramBadRequest:
         await callback.answer()

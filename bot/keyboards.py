@@ -11,8 +11,7 @@ def get_back_button(callback_data: str = "menu") -> InlineKeyboardButton:
 def get_main_menu_keyboard() -> InlineKeyboardMarkup:
     """Main menu keyboard"""
     keyboard = [
-        [InlineKeyboardButton(text="📋 الخطط والأسعار", callback_data="plans")],
-        [InlineKeyboardButton(text="💳 اشتراك", callback_data="subscribe")],
+        [InlineKeyboardButton(text="📋 الخطط والاشتراك", callback_data="plans")],
         [InlineKeyboardButton(text="📊 اشتراكاتي", callback_data="my_subscriptions")],
         [InlineKeyboardButton(text="🎁 نظام الإحالة", callback_data="referral")],
         [InlineKeyboardButton(text="ℹ️ معلومات", callback_data="info")],
