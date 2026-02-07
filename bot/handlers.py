@@ -239,8 +239,15 @@ async def callback_pay_network(callback: CallbackQuery):
     try:
         # Parse: pay_network_{plan_id}_{network}
         parts = callback.data.split("_")
+        if len(parts) < 4:
+            logger.error(f"Invalid callback data format: {callback.data}")
+            await callback.answer("خطأ في بيانات الدفع", show_alert=True)
+            return
+        
         plan_id = int(parts[2])
         network = parts[3]  # TRC20 or BSC
+        
+        logger.info(f"Processing payment network: plan_id={plan_id}, network={network}, user={callback.from_user.id}")
         
         with get_session() as session:
             plan = session.query(Plan).filter(Plan.id == plan_id).first()
@@ -260,8 +267,13 @@ async def callback_pay_network(callback: CallbackQuery):
             await callback.answer("شبكة غير صحيحة", show_alert=True)
             return
         
-        if not wallet_address:
-            await callback.answer("عنوان المحفظة غير متوفر لهذه الشبكة", show_alert=True)
+        if not wallet_address or wallet_address.strip() == "":
+            logger.error(f"Wallet address not configured for network {network}")
+            await callback.answer(
+                f"عنوان المحفظة غير متوفر لهذه الشبكة ({network_name})\n"
+                "يرجى التواصل مع الدعم.",
+                show_alert=True
+            )
             return
         
         # Check if user already has active subscription
@@ -289,21 +301,36 @@ async def callback_pay_network(callback: CallbackQuery):
             wallet_address=wallet_address
         )
         
+        logger.info(f"Payment created: {payment.id}, wallet: {wallet_address[:20]}..., showing instructions")
+        
         try:
             await callback.message.edit_text(
                 payment_text,
                 reply_markup=get_payment_keyboard(payment.id, wallet_address),
                 parse_mode="Markdown"
             )
+            await callback.answer("تم إنشاء طلب الدفع")
+            logger.info(f"Successfully displayed payment instructions for payment {payment.id}")
         except TelegramBadRequest as e:
             # If Markdown fails, try without parse_mode
             logger.warning(f"Markdown parse failed, trying without: {e}")
-            await callback.message.edit_text(
-                payment_text.replace("`", ""),  # Remove markdown backticks
-                reply_markup=get_payment_keyboard(payment.id, wallet_address)
-            )
-        await callback.answer()
-    except TelegramBadRequest:
+            try:
+                # Remove markdown formatting
+                clean_text = payment_text.replace("`", "")
+                await callback.message.edit_text(
+                    clean_text,
+                    reply_markup=get_payment_keyboard(payment.id, wallet_address)
+                )
+                await callback.answer("تم إنشاء طلب الدفع")
+                logger.info(f"Successfully displayed payment instructions (without Markdown) for payment {payment.id}")
+            except Exception as e2:
+                logger.error(f"Error editing message: {e2}", exc_info=True)
+                await callback.answer("حدث خطأ في عرض تعليمات الدفع", show_alert=True)
+    except ValueError as e:
+        logger.error(f"Value error in callback_pay_network: {e}, data: {callback.data}", exc_info=True)
+        await callback.answer("خطأ في معالجة البيانات", show_alert=True)
+    except TelegramBadRequest as e:
+        logger.error(f"TelegramBadRequest in callback_pay_network: {e}")
         await callback.answer()
     except Exception as e:
         logger.error(f"Error in callback_pay_network: {e}", exc_info=True)

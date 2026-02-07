@@ -69,7 +69,8 @@ class Texts:
 الشبكة: {network}
 
 يرجى إرسال المبلغ إلى العنوان التالي:
-`{wallet_address}`
+
+{wallet_address}
 
 ⚠️ تأكد من إرسال المبلغ على الشبكة الصحيحة ({network})
 
